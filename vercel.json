@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "functions": {
+    "server/api/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/server/api/$1"
+    }
+  ],
+  "env": {
+    "DATABASE_URL": "@database_url"
+  }
+} 
