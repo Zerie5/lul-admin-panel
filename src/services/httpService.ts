@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { debug, logError, logRequest, logResponse } from '../utils/debug';
 import authService from './authService';
+import { API_BASE_URL } from '../config';
 
 // Log environment variables to diagnose loading issues
 console.log('Environment variables from import.meta.env:', {
@@ -9,9 +10,6 @@ console.log('Environment variables from import.meta.env:', {
   VITE_USE_MOCK_DATA: import.meta.env.VITE_USE_MOCK_DATA,
   MODE: import.meta.env.MODE, // development, production, etc.
 });
-
-// Using environment variable or fallback to the Spring Boot backend URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 // Log the API URL always, not just in debug mode
 console.log('API Base URL:', API_BASE_URL);

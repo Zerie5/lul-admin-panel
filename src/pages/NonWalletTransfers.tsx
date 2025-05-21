@@ -42,7 +42,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import DownloadIcon from '@mui/icons-material/Download';
 
 import { useFilteredNonWalletTransfers } from '../hooks/useNonWalletTransferQueries';
-import { NonWalletTransferStatus, NonWalletTransferType, NonWalletTransferFilters, DisbursementStage } from '../types/nonWalletTransfer';
+import { NonWalletTransferStatus, NonWalletTransferType, NonWalletTransferFilters, DisbursementStage, TimeFrame } from '../types/nonWalletTransfer';
 import { TransferDetailsModal, CreateTransferModal, SendSmsNotificationModal } from '../components';
 import { exportTransfersToCSV } from '../utils/exportUtils';
 
@@ -56,11 +56,16 @@ const NonWalletTransfers = () => {
     searchCategory: 'all',
     statusFilter: undefined,
     type: undefined,
+    paymentStatus: undefined,
     startDate: undefined,
     endDate: undefined,
     minAmount: undefined,
-    maxAmount: undefined
+    maxAmount: undefined,
+    timeFrame: TimeFrame.ALL
   });
+  
+  // Add state for search input that doesn't trigger immediate filtering
+  const [searchInput, setSearchInput] = useState(filters.searchTerm || '');
   
   // State for modals
   const [detailsModal, setDetailsModal] = useState({
@@ -81,6 +86,9 @@ const NonWalletTransfers = () => {
     message: '',
     severity: 'info' as 'success' | 'error' | 'info'
   });
+  
+  // State for search button loading
+  const [searchLoading, setSearchLoading] = useState(false);
   
   // Use the React Query hook to fetch transfers
   const {
@@ -103,7 +111,7 @@ const NonWalletTransfers = () => {
     }
   }, [data]);
   
-  // Fetch transfers when filters change
+  // Fetch transfers only when pagination changes
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -113,7 +121,9 @@ const NonWalletTransfers = () => {
           severity: 'info'
         });
         
-        const result = await refetch();
+        console.log('Auto-fetching due to pagination change');
+        // Pass false to indicate this is not a search button triggered action
+        const result = await refetch(false);
         
         if (result) {
           setTransfers(result.transfers || []);
@@ -132,16 +142,43 @@ const NonWalletTransfers = () => {
       }
     };
     
-    fetchData();
-  }, [filters]);
+    // Only fetch automatically for pagination changes
+    if (filters.page !== undefined || filters.pageSize !== undefined) {
+      fetchData();
+    }
+  }, [filters.page, filters.pageSize]); // Only depend on pagination filters
   
-  // Handle search
-  const handleSearch = (event: any) => {
-    setFilters(prev => ({
-      ...prev,
-      searchTerm: event.target.value,
-      page: 0 // Reset to first page on search
-    }));
+  // Handle search input change without triggering search
+  const handleSearchInputChange = (event: any) => {
+    setSearchInput(event.target.value);
+  };
+  
+  // Handle search submission (on button click or Enter key)
+  const handleSearchSubmit = async () => {
+    // Set loading state
+    setSearchLoading(true);
+    
+    try {
+      setFilters(prev => ({
+        ...prev,
+        searchTerm: searchInput,
+        page: 0 // Reset to first page on search
+      }));
+      
+      // Trigger search with searchTriggered=true
+      await refetch(true);
+    } catch (error) {
+      console.error('Error during search:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+  
+  // Handle Enter key in search field
+  const handleSearchKeyDown = (event: any) => {
+    if (event.key === 'Enter') {
+      handleSearchSubmit();
+    }
   };
   
   // Handle search category change
@@ -153,13 +190,39 @@ const NonWalletTransfers = () => {
     }));
   };
   
-  // Handle filter change
+  // Handle filter change without triggering search
   const handleFilterChange = (field: string, value: any) => {
+    // Only update the filters state without triggering a search
     setFilters(prev => ({
       ...prev,
       [field]: value,
-      page: field === 'page' ? value : 0 // Reset to first page unless changing page
+      // Only reset page for page changes
+      page: field === 'page' ? value : prev.page
     }));
+  };
+  
+  // Handle applying all filters with the search button
+  const handleApplyFilters = async () => {
+    console.log('Applying all filters with search button');
+    
+    // Set loading state to true
+    setSearchLoading(true);
+    
+    try {
+      // Reset to first page when applying filters
+      setFilters(prev => ({
+        ...prev,
+        page: 0
+      }));
+      
+      // Trigger search with all filters applied
+      await refetch(true);
+    } catch (error) {
+      console.error('Error during search:', error);
+    } finally {
+      // Set loading state back to false when done
+      setSearchLoading(false);
+    }
   };
   
   // Handle pagination
@@ -173,6 +236,8 @@ const NonWalletTransfers = () => {
   
   // Handle opening details modal
   const handleOpenDetails = (transferId: string) => {
+    console.log(`Opening transaction details for ID: ${transferId}`);
+    
     setDetailsModal({
       open: true,
       transferId
@@ -180,16 +245,23 @@ const NonWalletTransfers = () => {
   };
   
   // Handle closing details modal
-  const handleCloseDetails = (success?: boolean) => {
+  const handleCloseDetails = (success?: boolean, updateType?: string) => {
     setDetailsModal({
       open: false,
       transferId: null
     });
     
     if (success) {
+      // Show different messages based on what was updated
+      const message = updateType === 'disbursement' 
+        ? 'Disbursement stage updated successfully'
+        : updateType === 'payment'
+        ? 'Payment status updated successfully'
+        : 'Transfer status updated successfully';
+        
       setNotification({
         open: true,
-        message: 'Transfer status updated successfully',
+        message,
         severity: 'success'
       });
       refetch();
@@ -268,10 +340,12 @@ const NonWalletTransfers = () => {
       searchCategory: 'all',
       statusFilter: undefined,
       type: undefined,
+      paymentStatus: undefined,
       startDate: undefined,
       endDate: undefined,
       minAmount: undefined,
-      maxAmount: undefined
+      maxAmount: undefined,
+      timeFrame: TimeFrame.ALL
     });
   };
   
@@ -357,12 +431,29 @@ const NonWalletTransfers = () => {
               <TextField
                 fullWidth
                 placeholder="Search transfers"
-                value={filters.searchTerm}
-                onChange={handleSearch}
+                value={searchInput}
+                onChange={handleSearchInputChange}
+                onKeyDown={handleSearchKeyDown}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
                       <SearchIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton 
+                        onClick={handleSearchSubmit}
+                        size="small"
+                        aria-label="search"
+                        disabled={searchLoading}
+                      >
+                        {searchLoading ? (
+                          <CircularProgress size={20} />
+                        ) : (
+                          <SearchIcon />
+                        )}
+                      </IconButton>
                     </InputAdornment>
                   )
                 }}
@@ -408,7 +499,7 @@ const NonWalletTransfers = () => {
                   variant="outlined"
                   startIcon={<RefreshIcon />}
                   onClick={handleRefresh}
-                  disabled={isLoading}
+                  disabled={isLoading || searchLoading}
                 >
                   Refresh
                 </Button>
@@ -446,18 +537,32 @@ const NonWalletTransfers = () => {
                 
                 <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth>
-                    <InputLabel>Type</InputLabel>
+                    <InputLabel>Payment Status</InputLabel>
                     <Select
-                      value={filters.type || ''}
-                      onChange={(e) => handleFilterChange('type', e.target.value)}
-                      label="Type"
+                      value={filters.paymentStatus || ''}
+                      onChange={(e) => handleFilterChange('paymentStatus', e.target.value)}
+                      label="Payment Status"
                     >
-                      <MenuItem value="">All Types</MenuItem>
-                      {Object.values(NonWalletTransferType).map((type) => (
-                        <MenuItem key={type} value={type}>
-                          {type.replace('_', ' ')}
-                        </MenuItem>
-                      ))}
+                      <MenuItem value="">All Status</MenuItem>
+                      <MenuItem value="1">Pending</MenuItem>
+                      <MenuItem value="2">Completed</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={3}>
+                  <FormControl fullWidth>
+                    <InputLabel>Time Frame</InputLabel>
+                    <Select
+                      value={filters.timeFrame || TimeFrame.ALL}
+                      onChange={(e) => handleFilterChange('timeFrame', e.target.value)}
+                      label="Time Frame"
+                    >
+                      <MenuItem value={TimeFrame.ALL}>All Time</MenuItem>
+                      <MenuItem value={TimeFrame.DAILY}>Today</MenuItem>
+                      <MenuItem value={TimeFrame.WEEKLY}>Last 7 Days</MenuItem>
+                      <MenuItem value={TimeFrame.MONTHLY}>Last 30 Days</MenuItem>
+                      <MenuItem value={TimeFrame.YEARLY}>Last 365 Days</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -518,15 +623,54 @@ const NonWalletTransfers = () => {
                   />
                 </Grid>
                 
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid item xs={12} sm={6} md={2}>
                   <Button
                     variant="outlined"
                     fullWidth
                     onClick={handleClearFilters}
                     sx={{ height: '100%' }}
+                    disabled={searchLoading}
                   >
                     Clear Filters
                   </Button>
+                </Grid>
+                
+                <Grid item xs={12} sm={12} md={8}>
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', paddingRight: '7%', width: '100%' }}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="large"
+                      onClick={handleApplyFilters}
+                      disabled={searchLoading}
+                      sx={{ 
+                        minWidth: '250px',
+                        height: '100%',
+                        position: 'relative'
+                      }}
+                    >
+                      {searchLoading ? (
+                        <>
+                          <CircularProgress
+                            size={24}
+                            sx={{
+                              position: 'absolute',
+                              left: '50%',
+                              marginLeft: '-12px',
+                              marginTop: '-12px',
+                              top: '50%'
+                            }}
+                          />
+                          <Box sx={{ opacity: 0.5 }}>Searching...</Box>
+                        </>
+                      ) : (
+                        <>
+                          <SearchIcon sx={{ mr: 1 }} />
+                          Search with Filters
+                        </>
+                      )}
+                    </Button>
+                  </Box>
                 </Grid>
               </>
             )}
@@ -589,10 +733,22 @@ const NonWalletTransfers = () => {
                     </TableCell>
                     <TableCell>
                       {transfer.senderName}
-                      <br />
-                      <Typography variant="caption" color="text.secondary">
-                        {transfer.senderPhone}
-                      </Typography>
+                      {transfer.senderCountry && (
+                        <>
+                          <br />
+                          <Typography variant="caption" color="text.secondary">
+                            {transfer.senderCountry}
+                          </Typography>
+                        </>
+                      )}
+                      {transfer.senderPhone && !transfer.senderCountry && (
+                        <>
+                          <br />
+                          <Typography variant="caption" color="text.secondary">
+                            {transfer.senderPhone}
+                          </Typography>
+                        </>
+                      )}
                     </TableCell>
                     <TableCell>
                       {transfer.recipientName}
@@ -600,6 +756,22 @@ const NonWalletTransfers = () => {
                       <Typography variant="caption" color="text.secondary">
                         {transfer.recipientPhone}
                       </Typography>
+                      {transfer.recipientEmail && (
+                        <>
+                          <br />
+                          <Typography variant="caption" color="text.secondary">
+                            {transfer.recipientEmail}
+                          </Typography>
+                        </>
+                      )}
+                      {transfer.recipientRelationship && (
+                        <>
+                          <br />
+                          <Typography variant="caption" sx={{ fontStyle: 'italic', color: 'primary.main' }}>
+                            {transfer.recipientRelationship.charAt(0) + transfer.recipientRelationship.slice(1).toLowerCase()} 
+                          </Typography>
+                        </>
+                      )}
                     </TableCell>
                     <TableCell>
                       {formatCurrency(transfer.amount, transfer.currency)}
@@ -612,7 +784,34 @@ const NonWalletTransfers = () => {
                       <Chip 
                         label={transfer.status} 
                         size="small"
-                        color={getStatusChipColor(transfer.status)}
+                        sx={{
+                          backgroundColor: transfer.status === NonWalletTransferStatus.COMPLETED
+                            ? '#e8f5e9' // light green
+                            : transfer.status === NonWalletTransferStatus.PROCESSING
+                            ? '#e3f2fd' // light blue
+                            : transfer.status === NonWalletTransferStatus.PENDING
+                            ? '#fff3e0' // light orange
+                            : transfer.status === NonWalletTransferStatus.FAILED
+                            ? '#ffebee' // light red
+                            : '#eeeeee', // light grey for CANCELLED
+                          color: transfer.status === NonWalletTransferStatus.COMPLETED
+                            ? '#2e7d32' // dark green
+                            : transfer.status === NonWalletTransferStatus.PROCESSING
+                            ? '#1565c0' // dark blue
+                            : transfer.status === NonWalletTransferStatus.PENDING
+                            ? '#e65100' // dark orange
+                            : transfer.status === NonWalletTransferStatus.FAILED
+                            ? '#c62828' // dark red
+                            : '#757575', // dark grey for CANCELLED
+                          fontWeight: 600,
+                          borderRadius: '20px',
+                          height: '24px',
+                          '& .MuiChip-label': {
+                            textTransform: 'uppercase',
+                            fontSize: '0.75rem',
+                            px: 1.5
+                          }
+                        }}
                       />
                     </TableCell>
                     <TableCell>
@@ -620,7 +819,26 @@ const NonWalletTransfers = () => {
                         <Chip 
                           label={transfer.disbursementStage} 
                           size="small"
-                          color={getDisbursementStageColor(transfer.disbursementStage)}
+                          sx={{
+                            backgroundColor: transfer.disbursementStage === 'Completed' || transfer.disbursementStage === 'PROCESSED'
+                              ? '#e8f5e9' // light green
+                              : transfer.disbursementStage === 'Processing' || transfer.disbursementStage === 'PROCESSING'
+                              ? '#e3f2fd' // light blue
+                              : '#fff3e0', // light orange
+                            color: transfer.disbursementStage === 'Completed' || transfer.disbursementStage === 'PROCESSED'
+                              ? '#2e7d32' // dark green
+                              : transfer.disbursementStage === 'Processing' || transfer.disbursementStage === 'PROCESSING'
+                              ? '#1565c0' // dark blue
+                              : '#e65100', // dark orange
+                            fontWeight: 600,
+                            borderRadius: '20px',
+                            height: '24px',
+                            '& .MuiChip-label': {
+                              textTransform: 'uppercase',
+                              fontSize: '0.75rem',
+                              px: 1.5
+                            }
+                          }}
                         />
                       )}
                     </TableCell>

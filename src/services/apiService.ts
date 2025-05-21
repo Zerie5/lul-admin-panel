@@ -1,7 +1,5 @@
 import axios from 'axios';
-
-// Create a configured axios instance with base URL
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+import { API_URL } from '../config';
 
 // Generic GET request with authentication
 const get = async <T>(endpoint: string, params = {}): Promise<T> => {

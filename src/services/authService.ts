@@ -1,8 +1,7 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
-// Use Vite's import.meta.env instead of process.env
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-console.log("Auth Service API URL:", API_URL);
+console.log("Auth Service API URL:", API_BASE_URL);
 
 // Types
 export interface LoginRequest {
@@ -129,10 +128,10 @@ const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
   console.log("💡 [authService] Login attempt for user:", credentials.username);
   
   try {
-    console.log(`💡 [authService] Sending login request to: ${API_URL}/api/internal/auth/login`);
+    console.log(`💡 [authService] Sending login request to: ${API_BASE_URL}/api/internal/auth/login`);
     
     const response = await axios.post<LoginResponse>(
-      `${API_URL}/api/internal/auth/login`,
+      `${API_BASE_URL}/api/internal/auth/login`,
       credentials
     );
     

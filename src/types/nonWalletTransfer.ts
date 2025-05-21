@@ -20,6 +20,14 @@ export enum DisbursementStage {
   FAILED = 'FAILED'
 }
 
+export enum TimeFrame {
+  ALL = 'ALL',
+  DAILY = 'DAILY',
+  WEEKLY = 'WEEKLY',
+  MONTHLY = 'MONTHLY',
+  YEARLY = 'YEARLY'
+}
+
 export interface NonWalletTransfer {
   id: string;
   amount: number;
@@ -30,7 +38,7 @@ export interface NonWalletTransfer {
   status: NonWalletTransferStatus;
   reference: string;
   senderName: string;
-  senderPhone: string;
+  senderPhone?: string;
   senderEmail?: string;
   senderCountry: string;
   senderAddress?: string;
@@ -39,6 +47,9 @@ export interface NonWalletTransfer {
   recipientEmail?: string;
   recipientCountry: string;
   recipientAddress?: string;
+  recipientIdDocumentType?: string;
+  recipientIdNumber?: string;
+  recipientRelationship?: string;
   recipientBank?: string;
   recipientAccountNumber?: string;
   recipientMobileNetwork?: string;
@@ -67,10 +78,14 @@ export interface NonWalletTransferFilters {
   status?: NonWalletTransferStatus;
   type?: NonWalletTransferType;
   statusFilter?: string;
+  paymentStatus?: string;
   startDate?: string;
   endDate?: string;
+  fromDate?: string;
+  toDate?: string;
   minAmount?: number;
   maxAmount?: number;
+  timeFrame?: TimeFrame;
 }
 
 export interface ApiPaginatedResponse<T> {

@@ -1,9 +1,7 @@
 import httpService from './httpService';
 import { debug, logError, startTimer } from '../utils/debug';
 import axios from 'axios';
-
-// API base URL from environment
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+import { API_BASE_URL } from '../config';
 
 // API endpoints for dashboard data
 const API_ENDPOINTS = {

@@ -67,6 +67,7 @@ import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import Tooltip from '@mui/material/Tooltip';
 import authService from '../services/authService';
+import { API_BASE_URL } from '../config';
 
 // Simple error boundary component
 const ErrorBoundary = ({ children }: { children: React.ReactNode }) => {
@@ -291,22 +292,21 @@ const Dashboard = () => {
     setConnectionDetails([]);
     
     try {
-      // Get the API URL from environment or use a default
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://192.168.100.79:8080';
+      // Use the centralized API URL config
       
       // Log detailed connection info for troubleshooting
-      console.log('Testing connection to backend API:', apiUrl);
+      console.log('Testing connection to backend API:', API_BASE_URL);
       console.log('Current origin:', window.location.origin);
       
       const details: string[] = [];
-      details.push(`Testing connection to: ${apiUrl || 'Default API URL (192.168.100.79:8080)'}`);
+      details.push(`Testing connection to: ${API_BASE_URL}`);
       
       // First try a basic network test
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
         
-        await fetch(apiUrl, { 
+        await fetch(API_BASE_URL, { 
           method: 'HEAD',
           signal: controller.signal,
           headers: {
@@ -324,7 +324,7 @@ const Dashboard = () => {
       }
       
       // Try the API connection - pass the apiUrl to ensure consistency
-      const isConnected = await httpService.testConnection(apiUrl);
+      const isConnected = await httpService.testConnection(API_BASE_URL);
       
       if (isConnected) {
         console.log('API connection test successful');
@@ -338,7 +338,7 @@ const Dashboard = () => {
         
         // Check for CORS
         try {
-          const corsCheck = await httpService.checkCorsConfig(apiUrl);
+          const corsCheck = await httpService.checkCorsConfig(API_BASE_URL);
           if (corsCheck.success && corsCheck.corsEnabled) {
             details.push('✅ CORS is properly configured on the backend');
           } else {
@@ -453,17 +453,16 @@ spring.web.cors.allow-credentials=true
   // Function to test Spring Boot CORS
   const testSpringBootCors = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://192.168.100.79:8080';
       showInfoSnackbar('Testing Spring Boot CORS configuration...');
       
       setConnectionStatus('testing');
-      setConnectionDetails([`Running detailed CORS test against ${apiUrl}...`]);
+      setConnectionDetails([`Running detailed CORS test against ${API_BASE_URL}...`]);
       
-      const results = await httpService.testSpringBootCors(apiUrl);
+      const results = await httpService.testSpringBootCors(API_BASE_URL);
       
       // Update details with test results
       const details = [
-        `Spring Boot CORS Test Results for ${apiUrl}:`,
+        `Spring Boot CORS Test Results for ${API_BASE_URL}:`,
         `CORS configured: ${results.corsConfigured ? 'Yes ✅' : 'No ❌'}`,
         ...results.details,
         '',
@@ -804,7 +803,7 @@ spring.web.cors.allow-credentials=true
               Activity={Boolean(activityError).toString()}, Transactions={Boolean(transactionsError).toString()}
             </Typography>
             <Typography variant="body2">
-              API URL: {import.meta.env.VITE_API_BASE_URL || 'Not set'}
+              API URL: {API_BASE_URL}
             </Typography>
           </Paper>
         )}
@@ -1619,9 +1618,9 @@ spring.web.cors.allow-credentials=true
           2. Backend Server Not Running
         </Typography>
         <Typography variant="body2" paragraph>
-          Verify that your Spring Boot application is running at {import.meta.env.VITE_API_BASE_URL} and 
-          that you can access it directly in your browser (try {`${import.meta.env.VITE_API_BASE_URL}/actuator/health`} 
-          or {`${import.meta.env.VITE_API_BASE_URL}/api/admin/dashboard/summary`}).
+          Verify that your Spring Boot application is running at {API_BASE_URL} and 
+          that you can access it directly in your browser (try {`${API_BASE_URL}/actuator/health`} 
+          or {`${API_BASE_URL}/api/admin/dashboard/summary`}).
         </Typography>
         
         <Typography 

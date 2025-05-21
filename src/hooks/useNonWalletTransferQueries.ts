@@ -5,12 +5,14 @@ import {
   getNonWalletTransferById,
   createNonWalletTransfer,
   updateNonWalletTransferStatus,
+  updateNonWalletTransferDisbursementStatus,
   getNonWalletTransferEvents,
   sendSmsNotification,
   getSupportedCountries,
   getBanksByCountry,
   getMobileNetworksByCountry,
-  calculateTransferFee
+  calculateTransferFee,
+  updateTransactionPaymentStatus
 } from '../services/nonWalletTransferService';
 import {
   NonWalletTransferFilters,
@@ -66,13 +68,21 @@ export const useFilteredNonWalletTransfers = (filters: NonWalletTransferFilters)
   const [isError, setIsError] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const refetch = async () => {
+  // Add state for tracking if search was triggered by button click
+  const [searchTriggered, setSearchTriggered] = useState<boolean>(false);
+
+  const refetch = async (triggerSearch: boolean = false) => {
     try {
       setIsLoading(true);
       setIsError(false);
       setError(null);
       
-      const responseData = await getFilteredNonWalletTransfers(filters);
+      // If search is triggered by button, set the state
+      if (triggerSearch) {
+        setSearchTriggered(true);
+      }
+      
+      const responseData = await getFilteredNonWalletTransfers(filters, triggerSearch || searchTriggered);
       setData(responseData);
       return responseData;
     } catch (err) {
@@ -242,6 +252,35 @@ export const useMobileNetworksByCountry = (countryCode: string) => {
   };
 };
 
+// Hook for updating the disbursement status of a non-wallet transfer
+export const useUpdateNonWalletTransferDisbursementStatus = (id: string) => {
+  return {
+    mutate: async (params: { 
+      disbursementStageId: number; 
+      updateCompletedAt?: boolean; 
+      notes?: string; 
+      adminId?: number 
+    }) => {
+      try {
+        const result = await updateNonWalletTransferDisbursementStatus(
+          id,
+          params.disbursementStageId,
+          params.updateCompletedAt,
+          params.notes,
+          params.adminId
+        );
+        return result;
+      } catch (error) {
+        console.error(`Error updating disbursement status for transfer ${id}:`, error);
+        throw error;
+      }
+    },
+    isLoading: false,
+    isError: false,
+    error: null
+  };
+};
+
 // Hook for calculating transfer fee
 export const useCalculateTransferFee = () => {
   return {
@@ -256,6 +295,33 @@ export const useCalculateTransferFee = () => {
         return result;
       } catch (error) {
         console.error('Error calculating fee:', error);
+        throw error;
+      }
+    },
+    isLoading: false,
+    isError: false,
+    error: null
+  };
+};
+
+// Hook for updating the payment status of a transaction
+export const useUpdateTransactionPaymentStatus = (id: string) => {
+  return {
+    mutate: async (params: { 
+      transactionStatusId: number; 
+      notes?: string; 
+      adminId?: number 
+    }) => {
+      try {
+        const result = await updateTransactionPaymentStatus(
+          id,
+          params.transactionStatusId,
+          params.notes,
+          params.adminId
+        );
+        return result;
+      } catch (error) {
+        console.error(`Error updating payment status for transaction ${id}:`, error);
         throw error;
       }
     },

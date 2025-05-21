@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { User, UserFilters, UsersResponse, UserTransaction, UserLoginHistory, UserStatus, UserRole } from '../types/user';
+import { API_URL } from '../config';
 
-const API_URL = '/api/users';
+const USERS_ENDPOINT = `${API_URL}/users`;
 
 // Set up axios interceptor for authentication
 axios.interceptors.request.use(
@@ -22,15 +23,15 @@ const handleResponse = async <T>(promise: Promise<any>): Promise<T> => {
 };
 
 export const getCurrentUser = async (): Promise<User> => {
-  return handleResponse<User>(axios.get(`${API_URL}/me`));
+  return handleResponse<User>(axios.get(`${USERS_ENDPOINT}/me`));
 };
 
 export const updateUser = async (userId: number, userData: Partial<User>): Promise<User> => {
-  return handleResponse<User>(axios.put(`${API_URL}/${userId}`, userData));
+  return handleResponse<User>(axios.put(`${USERS_ENDPOINT}/${userId}`, userData));
 };
 
 export const getAllUsers = async (): Promise<User[]> => {
-  return handleResponse<User[]>(axios.get(API_URL));
+  return handleResponse<User[]>(axios.get(USERS_ENDPOINT));
 };
 
 export const getFilteredUsers = async (filters: UserFilters): Promise<UsersResponse> => {
@@ -45,31 +46,31 @@ export const getFilteredUsers = async (filters: UserFilters): Promise<UsersRespo
   queryParams.append('page', filters.page.toString());
   queryParams.append('limit', filters.limit.toString());
   
-  return handleResponse<UsersResponse>(axios.get(`${API_URL}?${queryParams.toString()}`));
+  return handleResponse<UsersResponse>(axios.get(`${USERS_ENDPOINT}?${queryParams.toString()}`));
 };
 
 export const getUserById = async (userId: number): Promise<User> => {
-  return handleResponse<User>(axios.get(`${API_URL}/${userId}`));
+  return handleResponse<User>(axios.get(`${USERS_ENDPOINT}/${userId}`));
 };
 
 export const createUser = async (userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> => {
-  return handleResponse<User>(axios.post(API_URL, userData));
+  return handleResponse<User>(axios.post(USERS_ENDPOINT, userData));
 };
 
 export const deleteUser = async (userId: number): Promise<void> => {
-  await axios.delete(`${API_URL}/${userId}`);
+  await axios.delete(`${USERS_ENDPOINT}/${userId}`);
 };
 
 export const updateUserStatus = async (userId: number, status: UserStatus): Promise<User> => {
-  return handleResponse<User>(axios.put(`${API_URL}/${userId}/status`, { status }));
+  return handleResponse<User>(axios.put(`${USERS_ENDPOINT}/${userId}/status`, { status }));
 };
 
 export const getUserTransactions = async (userId: number): Promise<UserTransaction[]> => {
-  return handleResponse<UserTransaction[]>(axios.get(`${API_URL}/${userId}/transactions`));
+  return handleResponse<UserTransaction[]>(axios.get(`${USERS_ENDPOINT}/${userId}/transactions`));
 };
 
 export const getUserLoginHistory = async (userId: number): Promise<UserLoginHistory[]> => {
-  return handleResponse<UserLoginHistory[]>(axios.get(`${API_URL}/${userId}/login-history`));
+  return handleResponse<UserLoginHistory[]>(axios.get(`${USERS_ENDPOINT}/${userId}/login-history`));
 };
 
 // Mock data generator for development
