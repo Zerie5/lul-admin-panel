@@ -17,14 +17,14 @@ app.use((req, res, next) => {
 
 // Proxy all requests to the backend
 app.use('/', createProxyMiddleware({
-  target: 'http://localhost:8080',
+  target: 'https://lul-backend.onrender.com',
   changeOrigin: true,
   onProxyReq: (proxyReq, req, res) => {
     // Add auth header if needed
     // proxyReq.setHeader('Authorization', 'Bearer your-token');
     
     // Log the proxy request
-    console.log(`Proxying ${req.method} ${req.url} to http://localhost:8080${req.url}`);
+    console.log(`Proxying ${req.method} ${req.url} to https://lul-backend.onrender.com${req.url}`);
   },
   onProxyRes: (proxyRes, req, res) => {
     // Log the proxy response
@@ -41,5 +41,5 @@ app.use('/', createProxyMiddleware({
 
 app.listen(PORT, () => {
   console.log(`CORS Proxy running at http://localhost:${PORT}`);
-  console.log(`Proxying requests to http://localhost:8080`);
+console.log(`Proxying requests to https://lul-backend.onrender.com`);
 }); 

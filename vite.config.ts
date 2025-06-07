@@ -12,12 +12,12 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        secure: false,
+          proxy: {
+        '/api': {
+          target: 'https://lul-backend.onrender.com',
+          changeOrigin: true,
+          secure: true,
+        },
       },
-    },
   },
 }) 
