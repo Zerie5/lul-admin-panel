@@ -31,6 +31,7 @@ export interface UserData {
   email: string;
   firstName: string;
   lastName?: string;
+  avatar?: string;
   forcePasswordChange?: boolean;
   lastLogin?: string;
   roles: string[];
