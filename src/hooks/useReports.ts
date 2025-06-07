@@ -16,33 +16,49 @@ import {
   TransactionCorridorData,
   SavedReportConfiguration,
   ReportExportOptions,
-  VisualizationType
+  VisualizationType,
+  UserRetentionResponse,
+  PaydayCycleResponse
 } from '../types/reports';
 import * as reportService from '../services/reportService';
 import { REFRESH_INTERVAL } from '../config';
-import React from 'react';
 
 // Default filters (last 30 days)
 const defaultFilters: ReportFilters = {
   startDate: subDays(new Date(), 30),
   endDate: new Date(),
-  timeFrame: 'daily'
+  timeFrame: 'daily',
+  currency: 'ALL',
+  transactionTypeId: 'ALL',
+  transactionStatusId: 'ALL'
 };
 
 // Hook for transaction volume data
 export const useTransactionVolume = (filters: Partial<ReportFilters> = {}) => {
   const mergedFilters: ReportFilters = { ...defaultFilters, ...filters };
   
+  // Create a serializable cache key that properly handles Date objects
+  const cacheKey = [
+    'transactionVolume',
+    {
+      startDate: mergedFilters.startDate.toISOString(),
+      endDate: mergedFilters.endDate.toISOString(),
+      timeFrame: mergedFilters.timeFrame,
+      currency: mergedFilters.currency,
+      transactionTypeId: mergedFilters.transactionTypeId,
+      transactionStatusId: mergedFilters.transactionStatusId
+    }
+  ];
+  
   return useQuery<TransactionVolumeData[], Error>(
-    ['transactionVolume', mergedFilters],
+    cacheKey,
     () => {
       try {
-        // In a real app, use the actual API call
-        // return reportService.getTransactionVolume(mergedFilters);
-        return reportService.getMockTransactionVolume(mergedFilters);
+        // Use the real API call instead of mock data
+        return reportService.getTransactionVolume(mergedFilters);
       } catch (error) {
         console.error('Error fetching transaction volume:', error);
-        return [];
+        throw error; // Propagate the error to be handled by React Query
       }
     },
     {
@@ -64,12 +80,11 @@ export const useTransactionSuccessRate = (filters: Partial<ReportFilters> = {}) 
     ['transactionSuccessRate', mergedFilters],
     () => {
       try {
-        // In a real app, use the actual API call
-        // return reportService.getTransactionSuccessRate(mergedFilters);
-        return reportService.getMockTransactionSuccessRate(mergedFilters);
+        // Use the real API call instead of mock data
+        return reportService.getTransactionSuccessRate(mergedFilters);
       } catch (error) {
         console.error('Error fetching transaction success rate:', error);
-        return [];
+        throw error; // Propagate the error to be handled by React Query
       }
     },
     {
@@ -91,12 +106,11 @@ export const useTransactionTypeDistribution = (filters: Partial<ReportFilters> =
     ['transactionTypeDistribution', mergedFilters],
     () => {
       try {
-        // In a real app, use the actual API call
-        // return reportService.getTransactionTypeDistribution(mergedFilters);
-        return reportService.getMockTransactionTypeDistribution(mergedFilters);
+        // Use the real API call instead of mock data
+        return reportService.getTransactionTypeDistribution(mergedFilters);
       } catch (error) {
         console.error('Error fetching transaction type distribution:', error);
-        return [];
+        throw error; // Propagate the error to be handled by React Query
       }
     },
     {
@@ -118,12 +132,11 @@ export const useAverageTransactionValue = (filters: Partial<ReportFilters> = {})
     ['averageTransactionValue', mergedFilters],
     () => {
       try {
-        // In a real app, use the actual API call
-        // return reportService.getAverageTransactionValue(mergedFilters);
-        return reportService.getMockAverageTransactionValue(mergedFilters);
+        // Use the real API call instead of mock data
+        return reportService.getAverageTransactionValue(mergedFilters);
       } catch (error) {
         console.error('Error fetching average transaction value:', error);
-        return [];
+        throw error; // Propagate the error to be handled by React Query
       }
     },
     {
@@ -141,16 +154,33 @@ export const useAverageTransactionValue = (filters: Partial<ReportFilters> = {})
 export const useUserRegistrations = (filters: Partial<ReportFilters> = {}) => {
   const mergedFilters: ReportFilters = { ...defaultFilters, ...filters };
   
-  return useQuery<UserRegistrationData[], Error>(
-    ['userRegistrations', mergedFilters],
+  // Create a serializable cache key that properly handles Date objects
+  const cacheKey = [
+    'userRegistrations',
+    {
+      startDate: mergedFilters.startDate.toISOString(),
+      endDate: mergedFilters.endDate.toISOString(),
+      timeFrame: mergedFilters.timeFrame,
+      currency: mergedFilters.currency,
+      transactionTypeId: mergedFilters.transactionTypeId,
+      transactionStatusId: mergedFilters.transactionStatusId
+    }
+  ];
+  
+  return useQuery<{ data: UserRegistrationData[], total: number }, Error>(
+    cacheKey,
     () => {
       try {
-        // In a real app, use the actual API call
-        // return reportService.getUserRegistrations(mergedFilters);
-        return reportService.getMockUserRegistrations(mergedFilters);
+        console.log('🔄 useUserRegistrations query executing with filters:', {
+          startDate: mergedFilters.startDate.toISOString().split('T')[0],
+          endDate: mergedFilters.endDate.toISOString().split('T')[0],
+          timeFrame: mergedFilters.timeFrame
+        });
+        // Use the real API call instead of mock data
+        return reportService.getUserRegistrations(mergedFilters);
       } catch (error) {
         console.error('Error fetching user registrations:', error);
-        return [];
+        throw error; // Propagate the error to be handled by React Query
       }
     },
     {
@@ -168,16 +198,33 @@ export const useUserRegistrations = (filters: Partial<ReportFilters> = {}) => {
 export const useActiveUsers = (filters: Partial<ReportFilters> = {}) => {
   const mergedFilters: ReportFilters = { ...defaultFilters, ...filters };
   
-  return useQuery<ActiveUsersData[], Error>(
-    ['activeUsers', mergedFilters],
+  // Create a serializable cache key that properly handles Date objects
+  const cacheKey = [
+    'activeUsers',
+    {
+      startDate: mergedFilters.startDate.toISOString(),
+      endDate: mergedFilters.endDate.toISOString(),
+      timeFrame: mergedFilters.timeFrame,
+      currency: mergedFilters.currency,
+      transactionTypeId: mergedFilters.transactionTypeId,
+      transactionStatusId: mergedFilters.transactionStatusId
+    }
+  ];
+  
+  return useQuery<{ data: ActiveUsersData[], total: number, uniqueActiveUsers: number }, Error>(
+    cacheKey,
     () => {
       try {
-        // In a real app, use the actual API call
-        // return reportService.getActiveUsers(mergedFilters);
-        return reportService.getMockActiveUsers(mergedFilters);
+        console.log('🔄 useActiveUsers query executing with filters:', {
+          startDate: mergedFilters.startDate.toISOString().split('T')[0],
+          endDate: mergedFilters.endDate.toISOString().split('T')[0],
+          timeFrame: mergedFilters.timeFrame
+        });
+        // Use the real API call instead of mock data
+        return reportService.getActiveUsers(mergedFilters);
       } catch (error) {
         console.error('Error fetching active users:', error);
-        return [];
+        throw error; // Propagate the error to be handled by React Query
       }
     },
     {
@@ -192,27 +239,36 @@ export const useActiveUsers = (filters: Partial<ReportFilters> = {}) => {
 };
 
 // Hook for user retention data
-export const useUserRetention = (filters: Partial<ReportFilters> = {}) => {
+export const useUserRetention = (filters: ReportFilters) => {
   const mergedFilters: ReportFilters = { ...defaultFilters, ...filters };
-  
-  return useQuery<UserRetentionData[], Error>(
+
+  return useQuery<UserRetentionResponse, Error>(
     ['userRetention', mergedFilters],
-    () => {
-      try {
-        // In a real app, use the actual API call
-        // return reportService.getUserRetention(mergedFilters);
-        return reportService.getMockUserRetention(mergedFilters);
-      } catch (error) {
-        console.error('Error fetching user retention:', error);
-        return [];
-      }
-    },
+    () => reportService.getUserRetention(mergedFilters),
     {
       refetchInterval: REFRESH_INTERVAL,
       staleTime: REFRESH_INTERVAL / 2,
       retry: 2,
       onError: (error) => {
         console.error('User retention query error:', error);
+      }
+    }
+  );
+};
+
+// Hook for payday cycle analysis data
+export const usePaydayCycleAnalysis = (filters: ReportFilters) => {
+  const mergedFilters: ReportFilters = { ...defaultFilters, ...filters };
+
+  return useQuery<PaydayCycleResponse, Error>(
+    ['paydayCycleAnalysis', mergedFilters],
+    () => reportService.getPaydayCycleAnalysis(mergedFilters),
+    {
+      refetchInterval: REFRESH_INTERVAL,
+      staleTime: REFRESH_INTERVAL / 2,
+      retry: 2,
+      onError: (error) => {
+        console.error('Payday cycle analysis query error:', error);
       }
     }
   );
@@ -226,9 +282,8 @@ export const useGeographicDistribution = (filters: Partial<ReportFilters> = {}) 
     ['geographicDistribution', mergedFilters],
     () => {
       try {
-        // In a real app, use the actual API call
-        // return reportService.getGeographicDistribution(mergedFilters);
-        return reportService.getMockGeographicDistribution(mergedFilters);
+        // Use the real API call
+        return reportService.getGeographicDistribution(mergedFilters);
       } catch (error) {
         console.error('Error fetching geographic distribution:', error);
         return [];
@@ -249,16 +304,36 @@ export const useGeographicDistribution = (filters: Partial<ReportFilters> = {}) 
 export const useTransactionValue = (filters: Partial<ReportFilters> = {}) => {
   const mergedFilters: ReportFilters = { ...defaultFilters, ...filters };
   
+  // Create a serializable cache key that properly handles Date objects
+  const cacheKey = [
+    'transactionValue',
+    {
+      startDate: mergedFilters.startDate.toISOString(),
+      endDate: mergedFilters.endDate.toISOString(),
+      timeFrame: mergedFilters.timeFrame,
+      currency: mergedFilters.currency,
+      transactionTypeId: mergedFilters.transactionTypeId,
+      transactionStatusId: mergedFilters.transactionStatusId
+    }
+  ];
+  
   return useQuery<TransactionValueData[], Error>(
-    ['transactionValue', mergedFilters],
+    cacheKey,
     () => {
       try {
-        // In a real app, use the actual API call
-        // return reportService.getTransactionValue(mergedFilters);
-        return reportService.getMockTransactionValue(mergedFilters);
+        console.log('🔄 useTransactionValue query executing with filters:', {
+          startDate: mergedFilters.startDate.toISOString().split('T')[0],
+          endDate: mergedFilters.endDate.toISOString().split('T')[0],
+          timeFrame: mergedFilters.timeFrame,
+          currency: mergedFilters.currency,
+          transactionTypeId: mergedFilters.transactionTypeId,
+          transactionStatusId: mergedFilters.transactionStatusId
+        });
+        // Use the real API call instead of mock data
+        return reportService.getTransactionValue(mergedFilters);
       } catch (error) {
         console.error('Error fetching transaction value:', error);
-        return [];
+        throw error; // Propagate the error to be handled by React Query
       }
     },
     {
@@ -279,14 +354,16 @@ export const useFeeRevenue = (filters: Partial<ReportFilters> = {}) => {
   return useQuery<FeeRevenueData[], Error>(
     ['feeRevenue', mergedFilters],
     () => {
-      try {
-        // In a real app, use the actual API call
-        // return reportService.getFeeRevenue(mergedFilters);
-        return reportService.getMockFeeRevenue(mergedFilters);
-      } catch (error) {
-        console.error('Error fetching fee revenue:', error);
-        return [];
-      }
+      console.log('🔄 useFeeRevenue query executing with filters:', {
+        startDate: mergedFilters.startDate.toISOString().split('T')[0],
+        endDate: mergedFilters.endDate.toISOString().split('T')[0],
+        timeFrame: mergedFilters.timeFrame,
+        currency: mergedFilters.currency,
+        transactionTypeId: mergedFilters.transactionTypeId,
+        transactionStatusId: mergedFilters.transactionStatusId
+      });
+      // Use the real API call - no fallback to mock data
+      return reportService.getFeeRevenue(mergedFilters);
     },
     {
       refetchInterval: REFRESH_INTERVAL,
@@ -294,7 +371,9 @@ export const useFeeRevenue = (filters: Partial<ReportFilters> = {}) => {
       retry: 2,
       onError: (error) => {
         console.error('Fee revenue query error:', error);
-      }
+      },
+      keepPreviousData: true,
+      enabled: !!(mergedFilters.startDate && mergedFilters.endDate)
     }
   );
 };
@@ -306,14 +385,16 @@ export const useTransactionCorridors = (filters: Partial<ReportFilters> = {}) =>
   return useQuery<TransactionCorridorData[], Error>(
     ['transactionCorridors', mergedFilters],
     () => {
-      try {
-        // In a real app, use the actual API call
-        // return reportService.getTransactionCorridors(mergedFilters);
-        return reportService.getMockTransactionCorridors(mergedFilters);
-      } catch (error) {
-        console.error('Error fetching transaction corridors:', error);
-        return [];
-      }
+      console.log('🔄 useTransactionCorridors query executing with filters:', {
+        startDate: mergedFilters.startDate.toISOString().split('T')[0],
+        endDate: mergedFilters.endDate.toISOString().split('T')[0],
+        timeFrame: mergedFilters.timeFrame,
+        currency: mergedFilters.currency,
+        transactionTypeId: mergedFilters.transactionTypeId,
+        transactionStatusId: mergedFilters.transactionStatusId
+      });
+      // Use the real API call instead of mock data
+      return reportService.getTransactionCorridors(mergedFilters);
     },
     {
       refetchInterval: REFRESH_INTERVAL,
@@ -321,7 +402,9 @@ export const useTransactionCorridors = (filters: Partial<ReportFilters> = {}) =>
       retry: 2,
       onError: (error) => {
         console.error('Transaction corridors query error:', error);
-      }
+      },
+      keepPreviousData: true,
+      enabled: !!(mergedFilters.startDate && mergedFilters.endDate)
     }
   );
 };
@@ -338,6 +421,7 @@ export const useRefreshReports = () => {
     queryClient.invalidateQueries(['userRegistrations']);
     queryClient.invalidateQueries(['activeUsers']);
     queryClient.invalidateQueries(['userRetention']);
+    queryClient.invalidateQueries(['paydayCycleAnalysis']);
     queryClient.invalidateQueries(['geographicDistribution']);
     queryClient.invalidateQueries(['transactionValue']);
     queryClient.invalidateQueries(['feeRevenue']);
@@ -440,4 +524,92 @@ export const useVisualizationType = (initialType: VisualizationType = 'line') =>
   };
   
   return { visualizationType, toggleVisualizationType };
+};
+
+// Hook for user registration count (for the card display)
+export const useUserRegistrationCount = (filters: Partial<ReportFilters> = {}) => {
+  const mergedFilters: ReportFilters = { ...defaultFilters, ...filters };
+  
+  // Create a serializable cache key that properly handles Date objects
+  const cacheKey = [
+    'userRegistrationCount',
+    {
+      startDate: mergedFilters.startDate.toISOString(),
+      endDate: mergedFilters.endDate.toISOString(),
+      timeFrame: mergedFilters.timeFrame,
+      currency: mergedFilters.currency,
+      transactionTypeId: mergedFilters.transactionTypeId,
+      transactionStatusId: mergedFilters.transactionStatusId
+    }
+  ];
+  
+  return useQuery<number, Error>(
+    cacheKey,
+    () => {
+      try {
+        console.log('🔄 useUserRegistrationCount query executing with filters:', {
+          startDate: mergedFilters.startDate.toISOString().split('T')[0],
+          endDate: mergedFilters.endDate.toISOString().split('T')[0],
+          timeFrame: mergedFilters.timeFrame
+        });
+        // Use the new API call for registration count
+        return reportService.getUserRegistrationCount(mergedFilters);
+      } catch (error) {
+        console.error('Error fetching user registration count:', error);
+        throw error; // Propagate the error to be handled by React Query
+      }
+    },
+    {
+      refetchInterval: REFRESH_INTERVAL,
+      staleTime: REFRESH_INTERVAL / 2,
+      retry: 2,
+      onError: (error) => {
+        console.error('User registration count query error:', error);
+      }
+    }
+  );
+};
+
+// Hook for active user count (for the card display)
+export const useActiveUserCount = (filters: Partial<ReportFilters> = {}) => {
+  const mergedFilters: ReportFilters = { ...defaultFilters, ...filters };
+  
+  // Create a serializable cache key that properly handles Date objects
+  const cacheKey = [
+    'activeUserCount',
+    {
+      startDate: mergedFilters.startDate.toISOString(),
+      endDate: mergedFilters.endDate.toISOString(),
+      timeFrame: mergedFilters.timeFrame,
+      currency: mergedFilters.currency,
+      transactionTypeId: mergedFilters.transactionTypeId,
+      transactionStatusId: mergedFilters.transactionStatusId
+    }
+  ];
+  
+  return useQuery<number, Error>(
+    cacheKey,
+    () => {
+      try {
+        console.log('🔄 useActiveUserCount query executing with filters:', {
+          startDate: mergedFilters.startDate.toISOString().split('T')[0],
+          endDate: mergedFilters.endDate.toISOString().split('T')[0],
+          timeFrame: mergedFilters.timeFrame
+        });
+        // Use the new API call for active user count
+        return reportService.getActiveUserCount(mergedFilters);
+      } catch (error) {
+        console.error('Error fetching active user count:', error);
+        throw error; // Propagate the error to be handled by React Query
+      }
+    },
+    {
+      refetchInterval: REFRESH_INTERVAL,
+      staleTime: REFRESH_INTERVAL / 2,
+      retry: 2,
+      onError: (error) => {
+        console.error('Active user count query error:', error);
+      }
+    }
+  );
 }; 

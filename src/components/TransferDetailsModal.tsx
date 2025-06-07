@@ -47,6 +47,7 @@ import PaymentsIcon from '@mui/icons-material/Payments';
 import DoneIcon from '@mui/icons-material/Done';
 import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 import { useNonWalletTransfer } from '../hooks/useNonWalletTransfers';
 import { NonWalletTransferStatus, NonWalletTransferType } from '../types/nonWalletTransfer';
@@ -63,10 +64,25 @@ const statusColors = {
 
 // Format currency
 const formatCurrency = (amount: number, currency: string) => {
+  try {
+    // Map any invalid currency codes to valid ones
+    const currencyMap: Record<string, string> = {
+      'EURO': 'EUR',
+      // Add other mappings as needed
+    };
+    
+    // Use the mapped currency code if available, otherwise use the original
+    const validCurrency = currencyMap[currency] || currency;
+    
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: currency
+      currency: validCurrency
   }).format(amount);
+  } catch (error) {
+    // Fallback if the currency is invalid
+    console.warn(`Invalid currency code: ${currency}`, error);
+    return `${amount.toFixed(2)} ${currency}`;
+  }
 };
 
 // Format date
@@ -177,7 +193,7 @@ const TransferDetailsModal = ({ open, onClose, transferId }: TransferDetailsModa
       );
       
       if (result) {
-        handleStatusChangeClose();
+      handleStatusChangeClose();
         
         // Show success dialog for user feedback
         setPaymentSuccessDialog(true);
@@ -638,12 +654,12 @@ const TransferDetailsModal = ({ open, onClose, transferId }: TransferDetailsModa
               
               {transfer.senderCountry && (
                 <>
-                  <Grid item xs={6}>
+              <Grid item xs={6}>
                     <Typography variant="body2" color="text.secondary">Country:</Typography>
-                  </Grid>
-                  <Grid item xs={6}>
+              </Grid>
+              <Grid item xs={6}>
                     <Typography variant="body2">{transfer.senderCountry}</Typography>
-                  </Grid>
+              </Grid>
                 </>
               )}
               
@@ -1009,26 +1025,70 @@ const TransferDetailsModal = ({ open, onClose, transferId }: TransferDetailsModa
   
   // Render timeline tab
   const renderTimelineTab = () => {
-    if (!events || events.length === 0) {
+    if (!transfer) {
       return (
         <Box sx={{ p: 3, textAlign: 'center' }}>
-          <Typography color="text.secondary">No events found for this transfer</Typography>
+          <Typography color="text.secondary">No transfer data available</Typography>
+        </Box>
+      );
+    }
+    
+    // Generate timeline events based on available dates
+    const timelineEvents = [];
+    
+    // Always add the first event for transaction initiated
+    if (transfer.createdAt) {
+      timelineEvents.push({
+        id: 'created',
+        status: NonWalletTransferStatus.PENDING,
+        title: 'Transaction Initiated',
+        date: transfer.createdAt,
+        notes: 'Transaction has been initiated'
+      });
+    }
+    
+    // Add payment completed event if completedAt exists
+    if (transfer.completedAt) {
+      timelineEvents.push({
+        id: 'completed',
+        status: NonWalletTransferStatus.COMPLETED,
+        title: 'Payment Completed',
+        date: transfer.completedAt,
+        notes: 'Payment has been completed successfully'
+      });
+    }
+    
+    // Add disbursement completed event if disbursementCompleted exists
+    if (transfer.disbursmentCompleted) {
+      timelineEvents.push({
+        id: 'disbursed',
+        status: NonWalletTransferStatus.COMPLETED,
+        title: 'Disbursement Completed',
+        date: transfer.disbursmentCompleted,
+        notes: 'Funds have been disbursed to recipient'
+      });
+    }
+    
+    if (timelineEvents.length === 0) {
+      return (
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Typography color="text.secondary">No timeline events available for this transfer</Typography>
         </Box>
       );
     }
     
     return (
       <Box sx={{ p: 2 }}>
-        {events.map((event, index) => (
+        {timelineEvents.map((event, index) => (
           <Box
             key={event.id}
             sx={{
               position: 'relative',
-              pb: index === events.length - 1 ? 0 : 3,
+              pb: index === timelineEvents.length - 1 ? 0 : 3,
               pl: 4
             }}
           >
-            {index !== events.length - 1 && (
+            {index !== timelineEvents.length - 1 && (
               <Box
                 sx={{
                   position: 'absolute',
@@ -1049,7 +1109,9 @@ const TransferDetailsModal = ({ open, onClose, transferId }: TransferDetailsModa
                 width: 16,
                 height: 16,
                 borderRadius: '50%',
-                bgcolor: statusColors[event.status],
+                bgcolor: event.id === 'created' ? statusColors[NonWalletTransferStatus.PENDING] :
+                        event.id === 'completed' ? statusColors[NonWalletTransferStatus.PROCESSING] :
+                        statusColors[NonWalletTransferStatus.COMPLETED],
                 border: '2px solid',
                 borderColor: 'background.paper'
               }}
@@ -1062,11 +1124,11 @@ const TransferDetailsModal = ({ open, onClose, transferId }: TransferDetailsModa
               }}
             >
               <Typography variant="subtitle2">
-                {`Status: ${event.status}`}
+                {`Status: ${event.title}`}
               </Typography>
               
               <Typography variant="caption" color="text.secondary" display="block">
-                {formatDate(event.createdAt)}
+                {formatDate(event.date)}
               </Typography>
               
               {event.notes && (
@@ -1081,46 +1143,54 @@ const TransferDetailsModal = ({ open, onClose, transferId }: TransferDetailsModa
     );
   };
   
-  // Return error state if transaction not found
-  if (!loading && error) {
+  // If there's an error loading the transfer, show error message
+  if (error) {
     return (
-      <Dialog open={open} onClose={() => onClose(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={open}
+        onClose={() => onClose()}
+        fullWidth
+        maxWidth="md"
+      >
         <DialogTitle>
-          Transaction Details
+          Transfer Details
           <IconButton
             aria-label="close"
-            onClick={() => onClose(false)}
+            onClick={() => onClose()}
             sx={{ position: 'absolute', right: 8, top: 8 }}
           >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent>
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="h6" color="error" gutterBottom>
-              Error Loading Transaction
+        <DialogContent dividers>
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <ErrorOutlineIcon color="error" sx={{ fontSize: 64, mb: 2 }} />
+            <Typography variant="h6" gutterBottom>
+              Error Loading Transfer Details
             </Typography>
-            <Typography variant="body1" gutterBottom>
-              {error.message || `Transaction with ID ${transferId} could not be found.`}
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+              {error.message || 'Failed to load transfer details. This may be due to an invalid transfer ID or a network issue.'}
             </Typography>
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Transaction ID: {transferId}
+            <Alert severity="info" sx={{ mb: 3, textAlign: 'left' }}>
+              <Typography variant="body2">
+                <strong>Transfer ID:</strong> {transferId}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Please check if the ID is correct.
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                Please check that this ID is correct. If the problem persists, contact technical support.
               </Typography>
-              <Button 
-                variant="outlined" 
-                onClick={() => refetch()}
-              >
-                Retry
-              </Button>
-            </Box>
+            </Alert>
+            <Button 
+              variant="contained" 
+              onClick={refetch}
+              startIcon={<RefreshIcon />}
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : 'Try Again'}
+            </Button>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => onClose(false)}>Close</Button>
+          <Button onClick={() => onClose()}>Close</Button>
         </DialogActions>
       </Dialog>
     );

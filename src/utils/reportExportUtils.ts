@@ -120,21 +120,50 @@ export const exportTransactionValueToCSV = (data: TransactionValueData[]) => {
 export const exportFeeRevenueToCSV = (data: FeeRevenueData[]) => {
   const headers = {
     date: 'Date',
-    revenue: 'Fee Revenue'
+    revenue: 'Fee Revenue ($)',
+    transactionCount: 'Transaction Count',
+    averageFeePerTransaction: 'Average Fee per Transaction ($)',
+    growthRate: 'Growth Rate (%)',
+    totalTransactionVolume: 'Total Transaction Volume ($)',
+    feeRatio: 'Fee Ratio (%)'
   };
   
-  downloadCSV(data, headers, `fee-revenue-${getDateString()}.csv`);
+  // Format data for export
+  const formattedData = data.map(item => ({
+    ...item,
+    revenue: Number(item.revenue).toFixed(2),
+    averageFeePerTransaction: Number(item.averageFeePerTransaction || 0).toFixed(2),
+    growthRate: item.growthRate !== null ? Number(item.growthRate).toFixed(2) : 'N/A',
+    totalTransactionVolume: Number(item.totalTransactionVolume || 0).toFixed(2),
+    feeRatio: Number(item.feeRatio || 0).toFixed(2)
+  }));
+  
+  downloadCSV(formattedData, headers, `fee-revenue-${getDateString()}.csv`);
 };
 
 // Export transaction corridors data to CSV
 export const exportTransactionCorridorsToCSV = (data: TransactionCorridorData[]) => {
   const headers = {
+    fromCountry: 'From Country',
+    toCountry: 'To Country',
     corridor: 'Corridor',
-    count: 'Transaction Count',
-    value: 'Total Value'
+    transactionCount: 'Transaction Count',
+    totalValue: 'Total Value ($)',
+    averageValue: 'Average Value ($)',
+    transactionPercentage: 'Transaction %',
+    valuePercentage: 'Value %'
   };
   
-  downloadCSV(data, headers, `transaction-corridors-${getDateString()}.csv`);
+  // Format data for export
+  const formattedData = data.map(item => ({
+    ...item,
+    totalValue: Number(item.totalValue).toFixed(2),
+    averageValue: Number(item.averageValue).toFixed(2),
+    transactionPercentage: Number(item.transactionPercentage).toFixed(2),
+    valuePercentage: Number(item.valuePercentage).toFixed(2)
+  }));
+  
+  downloadCSV(formattedData, headers, `transaction-corridors-${getDateString()}.csv`);
 };
 
 // Export data to Excel

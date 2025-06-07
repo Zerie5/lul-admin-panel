@@ -77,8 +77,9 @@ export const useFilteredNonWalletTransfers = (filters: NonWalletTransferFilters)
       setIsError(false);
       setError(null);
       
-      // If search is triggered by button, set the state
+      // Clear previous data immediately when starting a new search to prevent showing stale results
       if (triggerSearch) {
+        setData(undefined);
         setSearchTriggered(true);
       }
       
@@ -89,6 +90,8 @@ export const useFilteredNonWalletTransfers = (filters: NonWalletTransferFilters)
       console.error('Error fetching filtered transfers:', err);
       setIsError(true);
       setError(err instanceof Error ? err : new Error('An unknown error occurred'));
+      // Clear data on error to prevent showing stale results
+      setData(undefined);
       throw err;
     } finally {
       setIsLoading(false);

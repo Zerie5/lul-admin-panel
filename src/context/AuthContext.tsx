@@ -7,8 +7,10 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   userData: UserData | null;
+  user: UserData | null; // Alias for userData for backward compatibility
   login: (credentials: LoginRequest) => Promise<void>;
   logout: () => void;
+  hasRole: (roles: string[]) => boolean;
   error: AuthError | null;
 }
 
@@ -17,8 +19,10 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: true,
   userData: null,
+  user: null,
   login: async () => {},
   logout: () => {},
+  hasRole: () => false,
   error: null
 });
 
@@ -88,7 +92,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     
     try {
       const response = await authService.login(credentials);
-      setUserData(response.userData);
+      // Convert LoginResponse to UserData format
+      const userData: UserData = {
+        id: response.id,
+        username: response.username,
+        email: response.email,
+        firstName: response.firstName,
+        roles: response.roles
+      };
+      setUserData(userData);
       setIsAuthenticated(true);
       
       // Start session monitoring
@@ -98,7 +110,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
       
       // Redirect based on password change requirement
-      if (response.userData.forcePasswordChange) {
+      if (userData.forcePasswordChange) {
         navigate('/change-password');
       } else {
         navigate('/dashboard');
@@ -120,13 +132,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     navigate('/login');
   };
 
+  // Role checking function
+  const hasRole = (roles: string[]): boolean => {
+    if (!userData || !userData.roles) return false;
+    return roles.some(role => userData.roles.includes(role));
+  };
+
   // Context value
   const value = {
     isAuthenticated,
     isLoading,
     userData,
+    user: userData, // Alias for backward compatibility
     login: handleLogin,
     logout: handleLogout,
+    hasRole,
     error
   };
 

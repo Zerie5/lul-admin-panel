@@ -60,6 +60,7 @@ export interface NonWalletTransfer {
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
+  disbursmentCompleted?: string;
   bankDetails?: {
     bankName: string;
     accountNumber: string;

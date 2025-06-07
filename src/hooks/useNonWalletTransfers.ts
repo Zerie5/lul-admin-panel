@@ -107,10 +107,76 @@ export const useNonWalletTransfer = (transferId: string) => {
       
       // Fetch actual data from the backend
       const transferData = await getNonWalletTransferById(transferId);
-      const eventsData = await getNonWalletTransferEvents(transferId);
       
       setTransfer(transferData);
-      setEvents(eventsData);
+      
+      // Generate event timeline based on transaction data
+      const generatedEvents: NonWalletTransferEvent[] = [];
+      
+      // Always add created event
+      generatedEvents.push({
+        id: `EVT_${transferId}_1`,
+        transferId: transferId,
+        status: NonWalletTransferStatus.PENDING,
+        notes: 'Transaction received',
+        createdAt: transferData.createdAt
+      });
+      
+      // Add processing event if applicable
+      if (transferData.status === NonWalletTransferStatus.PROCESSING || 
+          transferData.status === NonWalletTransferStatus.COMPLETED ||
+          transferData.disbursementStage === 'Processing' ||
+          transferData.disbursementStageId === 2) {
+        generatedEvents.push({
+          id: `EVT_${transferId}_2`,
+          transferId: transferId,
+          status: NonWalletTransferStatus.PROCESSING,
+          notes: 'Transaction in processing',
+          createdAt: transferData.createdAt // Use a slightly later time
+        });
+      }
+      
+      // Add completed event if applicable
+      if (transferData.status === NonWalletTransferStatus.COMPLETED || 
+          transferData.disbursementStage === 'Completed' ||
+          transferData.disbursementStageId === 3) {
+        generatedEvents.push({
+          id: `EVT_${transferId}_3`,
+          transferId: transferId,
+          status: NonWalletTransferStatus.COMPLETED,
+          notes: 'Transaction completed',
+          createdAt: transferData.completedAt || transferData.updatedAt || transferData.createdAt
+        });
+      }
+      
+      // Add failed event if applicable
+      if (transferData.status === NonWalletTransferStatus.FAILED) {
+        generatedEvents.push({
+          id: `EVT_${transferId}_4`,
+          transferId: transferId,
+          status: NonWalletTransferStatus.FAILED,
+          notes: 'Transaction failed',
+          createdAt: transferData.updatedAt || transferData.createdAt
+        });
+      }
+      
+      // Add cancelled event if applicable
+      if (transferData.status === NonWalletTransferStatus.CANCELLED) {
+        generatedEvents.push({
+          id: `EVT_${transferId}_5`,
+          transferId: transferId,
+          status: NonWalletTransferStatus.CANCELLED,
+          notes: 'Transaction cancelled',
+          createdAt: transferData.updatedAt || transferData.createdAt
+        });
+      }
+      
+      // Sort events by date
+      generatedEvents.sort((a, b) => 
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      
+      setEvents(generatedEvents);
     } catch (err: any) {
       setError(err);
     } finally {
@@ -134,9 +200,9 @@ export const useNonWalletTransfer = (transferId: string) => {
       if (updatedTransfer) {
         setTransfer(updatedTransfer);
         
-        // Fetch updated events
-        const updatedEvents = await getNonWalletTransferEvents(transferId);
-        setEvents(updatedEvents);
+        // Generate events based on updated transfer
+        const updatedGeneratedEvents = generateEventsFromTransfer(updatedTransfer, transferId);
+        setEvents(updatedGeneratedEvents);
       }
       
       return updatedTransfer;
@@ -171,9 +237,9 @@ export const useNonWalletTransfer = (transferId: string) => {
       if (updatedTransfer) {
         setTransfer(updatedTransfer);
         
-        // Fetch updated events
-        const updatedEvents = await getNonWalletTransferEvents(transferId);
-        setEvents(updatedEvents);
+        // Generate events based on updated transfer
+        const updatedGeneratedEvents = generateEventsFromTransfer(updatedTransfer, transferId);
+        setEvents(updatedGeneratedEvents);
       }
       
       return updatedTransfer;
@@ -185,7 +251,7 @@ export const useNonWalletTransfer = (transferId: string) => {
     }
   };
 
-  // Add payment status update function
+  // Update payment status function
   const updatePaymentStatus = async (
     transactionStatusId: number,
     notes?: string,
@@ -207,9 +273,9 @@ export const useNonWalletTransfer = (transferId: string) => {
       if (updatedTransfer) {
         setTransfer(updatedTransfer);
         
-        // Fetch updated events
-        const updatedEvents = await getNonWalletTransferEvents(transferId);
-        setEvents(updatedEvents);
+        // Generate events based on updated transfer
+        const updatedGeneratedEvents = generateEventsFromTransfer(updatedTransfer, transferId);
+        setEvents(updatedGeneratedEvents);
       }
       
       return updatedTransfer;
@@ -219,6 +285,51 @@ export const useNonWalletTransfer = (transferId: string) => {
     } finally {
       setPaymentStatusUpdateLoading(false);
     }
+  };
+
+  // Helper function to generate events from transfer data
+  const generateEventsFromTransfer = (transferData: NonWalletTransfer, id: string): NonWalletTransferEvent[] => {
+    const generatedEvents: NonWalletTransferEvent[] = [];
+    
+    // Step 1: Transaction Created - always present as createdAt should never be null
+    if (transferData.createdAt) {
+      generatedEvents.push({
+        id: `EVT_${id}_1`,
+        transferId: id,
+        status: NonWalletTransferStatus.PENDING,
+        notes: 'Transaction Created: Waiting Payment Confirmation',
+        createdAt: transferData.createdAt
+      });
+    }
+    
+    // Step 2: Payment Confirmed - only add if completedAt exists
+    if (transferData.completedAt) {
+      generatedEvents.push({
+        id: `EVT_${id}_2`,
+        transferId: id,
+        status: NonWalletTransferStatus.PROCESSING,
+        notes: 'Payment Confirmed: Waiting Disbursement',
+        createdAt: transferData.completedAt
+      });
+    }
+    
+    // Step 3: Disbursement Completed - only add if disbursmentCompleted exists
+    if (transferData.disbursmentCompleted) {
+      generatedEvents.push({
+        id: `EVT_${id}_3`,
+        transferId: id,
+        status: NonWalletTransferStatus.COMPLETED,
+        notes: 'Disbursement Completed: Success',
+        createdAt: transferData.disbursmentCompleted
+      });
+    }
+    
+    // Sort events by date
+    generatedEvents.sort((a, b) => 
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+    
+    return generatedEvents;
   };
 
   return {

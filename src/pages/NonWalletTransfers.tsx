@@ -26,7 +26,8 @@ import {
   MenuItem,
   Select,
   FormControl,
-  InputLabel
+  InputLabel,
+ 
 } from '@mui/material';
 
 // Import icons separately
@@ -40,8 +41,11 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import WarningIcon from '@mui/icons-material/Warning';
 import DownloadIcon from '@mui/icons-material/Download';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 import { useFilteredNonWalletTransfers } from '../hooks/useNonWalletTransferQueries';
+import { getFilteredNonWalletTransfers } from '../services/nonWalletTransferService';
 import { NonWalletTransferStatus, NonWalletTransferType, NonWalletTransferFilters, DisbursementStage, TimeFrame } from '../types/nonWalletTransfer';
 import { TransferDetailsModal, CreateTransferModal, SendSmsNotificationModal } from '../components';
 import { exportTransfersToCSV } from '../utils/exportUtils';
@@ -158,17 +162,37 @@ const NonWalletTransfers = () => {
     // Set loading state
     setSearchLoading(true);
     
+    // Clear previous results immediately to prevent showing stale data
+    setTransfers([]);
+    setTotalCount(0);
+    
     try {
-      setFilters(prev => ({
-        ...prev,
+      // Create updated filters with the new search term
+      const updatedFilters = {
+        ...filters,
         searchTerm: searchInput,
         page: 0 // Reset to first page on search
-      }));
+      };
       
-      // Trigger search with searchTriggered=true
-      await refetch(true);
+      // Update the filters state
+      setFilters(updatedFilters);
+      
+      // Use a small timeout to ensure state update completes before refetch
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      // Trigger search with the updated filters directly
+      const result = await refetch(true);
+      
+      // Update state with new results
+      if (result) {
+        setTransfers(result.transfers || []);
+        setTotalCount(result.totalCount || 0);
+      }
     } catch (error) {
       console.error('Error during search:', error);
+      // Keep transfers empty on error
+      setTransfers([]);
+      setTotalCount(0);
     } finally {
       setSearchLoading(false);
     }
@@ -208,6 +232,10 @@ const NonWalletTransfers = () => {
     // Set loading state to true
     setSearchLoading(true);
     
+    // Clear previous results immediately to prevent showing stale data
+    setTransfers([]);
+    setTotalCount(0);
+    
     try {
       // Reset to first page when applying filters
       setFilters(prev => ({
@@ -216,9 +244,18 @@ const NonWalletTransfers = () => {
       }));
       
       // Trigger search with all filters applied
-      await refetch(true);
+      const result = await refetch(true);
+      
+      // Update state with new results
+      if (result) {
+        setTransfers(result.transfers || []);
+        setTotalCount(result.totalCount || 0);
+      }
     } catch (error) {
       console.error('Error during search:', error);
+      // Keep transfers empty on error
+      setTransfers([]);
+      setTotalCount(0);
     } finally {
       // Set loading state back to false when done
       setSearchLoading(false);
@@ -333,6 +370,14 @@ const NonWalletTransfers = () => {
   
   // Handle clearing filters
   const handleClearFilters = () => {
+    // Clear search input
+    setSearchInput('');
+    
+    // Clear transfers data
+    setTransfers([]);
+    setTotalCount(0);
+    
+    // Reset all filters
     setFilters({
       page: 0,
       pageSize: filters.pageSize,

@@ -16,9 +16,9 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-  Tooltip,
   Alert
 } from '@mui/material';
+import Tooltip from '@mui/material/Tooltip';
 import CloseIcon from '@mui/icons-material/Close';
 import FlagIcon from '@mui/icons-material/Flag';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
