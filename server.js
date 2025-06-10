@@ -8,15 +8,12 @@ import { dirname } from 'path';
 
 // Load environment variables from .env.local first, then fallback to .env
 dotenv.config({ path: '.env.local' });
-if (!process.env.username || !process.env.password) {
-  dotenv.config({ path: '.env' });
-}
+dotenv.config({ path: '.env' });
 
 // Log environment for debugging
 console.log('Environment:', {
   NODE_ENV: process.env.NODE_ENV,
-  username: process.env.username ? 'Set' : 'Not set',
-  password: process.env.password ? 'Set (value hidden)' : 'Not set',
+  VITE_API_BASE_URL: process.env.VITE_API_BASE_URL ? 'Set' : 'Not set',
   PORT: process.env.PORT || 3000
 });
 

@@ -1,106 +1,102 @@
 import React from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  TextField,
+import { 
+  Container, 
+  Paper, 
+  Typography, 
+  Box, 
+  Avatar, 
+  Grid, 
+  TextField, 
   Button,
-  Grid,
-  Avatar
+  Divider
 } from '@mui/material';
 
 const SimpleProfile: React.FC = () => {
   return (
-    <Box sx={{ flexGrow: 1, p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Profile
-      </Typography>
-      
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={2}>
-            <Avatar
-              sx={{ width: 100, height: 100, mx: 'auto' }}
-              alt="User Profile"
-              src="/placeholder-avatar.jpg"
-            />
-          </Grid>
-          <Grid item xs={12} md={10}>
-            <Typography variant="h5">John Doe</Typography>
-            <Typography variant="body1" color="textSecondary">
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Paper elevation={2} sx={{ p: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+          <Avatar
+            sx={{ width: 80, height: 80, mr: 3, bgcolor: 'primary.main' }}
+            src="/placeholder-avatar.jpg"
+            alt="Profile"
+          >
+            U
+          </Avatar>
+          <Box>
+            <Typography variant="h5">User Name</Typography>
+            <Typography variant="body2" color="text.secondary">
               Administrator
             </Typography>
-            <Typography variant="body2" color="textSecondary">
-              Member since: January 15, 2023
-            </Typography>
-          </Grid>
-        </Grid>
-      </Paper>
-      
-      <Paper sx={{ p: 3 }}>
+          </Box>
+        </Box>
+
+        <Divider sx={{ mb: 3 }} />
+
         <Typography variant="h6" gutterBottom>
-          Personal Information
+          Profile Information
         </Typography>
-        
+
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
               label="First Name"
-              defaultValue="John"
-              margin="normal"
               variant="outlined"
+              placeholder="Enter first name"
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
               label="Last Name"
-              defaultValue="Doe"
-              margin="normal"
               variant="outlined"
+              placeholder="Enter last name"
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          
+          <Grid item xs={12}>
             <TextField
               fullWidth
               label="Email"
-              defaultValue="john.doe@example.com"
-              margin="normal"
               variant="outlined"
+              type="email"
+              placeholder="Enter email address"
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          
+          <Grid item xs={12}>
             <TextField
               fullWidth
               label="Phone"
-              defaultValue="+1 (555) 123-4567"
-              margin="normal"
               variant="outlined"
+              placeholder="Enter phone number"
             />
           </Grid>
+          
           <Grid item xs={12}>
             <TextField
               fullWidth
               label="Address"
-              defaultValue="123 Main Street, Anytown, USA"
-              margin="normal"
               variant="outlined"
+              multiline
+              rows={2}
+              placeholder="Enter address"
             />
           </Grid>
-          <Grid item xs={12}>
-            <Box sx={{ mt: 2 }}>
-              <Button variant="contained" color="primary" sx={{ mr: 2 }}>
-                Save Changes
-              </Button>
-              <Button variant="outlined">
-                Cancel
-              </Button>
-            </Box>
-          </Grid>
         </Grid>
+
+        <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
+          <Button variant="contained" color="primary">
+            Save Changes
+          </Button>
+          <Button variant="outlined">
+            Cancel
+          </Button>
+        </Box>
       </Paper>
-    </Box>
+    </Container>
   );
 };
 

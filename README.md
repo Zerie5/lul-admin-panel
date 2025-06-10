@@ -122,6 +122,7 @@ The reports section offers advanced data visualization and analysis tools:
 3. Build for production:
    ```
    npm run build
+
    ```
 
 ## Technologies Used
@@ -133,4 +134,5 @@ The reports section offers advanced data visualization and analysis tools:
 - React Query
 - Axios
 - Date-fns
+- Vite 
 - Vite 

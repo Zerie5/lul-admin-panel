@@ -48,11 +48,12 @@ const CreateTransferModal = ({ open, onClose }: CreateTransferModalProps) => {
   
   const { createTransfer, loading: apiLoading, error, success } = useCreateNonWalletTransfer();
   
-  // Mock sender data for demonstration
+  // TODO: Replace with real sender data from backend API
+  // Mock sender data removed for security - connect to backend API
   const mockSenders = [
-    { id: 'USR001', name: 'John Doe', phone: '+1234567890', email: 'john@example.com', country: 'US' },
-    { id: 'USR002', name: 'Jane Smith', phone: '+1987654321', email: 'jane@example.com', country: 'UK' },
-    { id: 'USR003', name: 'Alice Johnson', phone: '+1122334455', email: 'alice@example.com', country: 'CA' }
+    // Remove hardcoded demo users for security
+    // TODO: Implement API call to fetch real senders
+    // { id: 'USR001', name: 'User Name', phone: '+1234567890', email: 'user@example.com', country: 'US' },
   ];
   
   const initialValues = {

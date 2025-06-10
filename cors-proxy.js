@@ -16,15 +16,16 @@ app.use((req, res, next) => {
 });
 
 // Proxy all requests to the backend
+const targetUrl = process.env.VITE_API_BASE_URL || 'http://localhost:8080';
 app.use('/', createProxyMiddleware({
-  target: 'https://lul-backend.onrender.com',
+  target: targetUrl,
   changeOrigin: true,
   onProxyReq: (proxyReq, req, res) => {
     // Add auth header if needed
     // proxyReq.setHeader('Authorization', 'Bearer your-token');
     
     // Log the proxy request
-    console.log(`Proxying ${req.method} ${req.url} to https://lul-backend.onrender.com${req.url}`);
+    console.log(`Proxying ${req.method} ${req.url} to ${targetUrl}${req.url}`);
   },
   onProxyRes: (proxyRes, req, res) => {
     // Log the proxy response
@@ -41,5 +42,5 @@ app.use('/', createProxyMiddleware({
 
 app.listen(PORT, () => {
   console.log(`CORS Proxy running at http://localhost:${PORT}`);
-console.log(`Proxying requests to https://lul-backend.onrender.com`);
+console.log(`Proxying requests to ${targetUrl}`);
 }); 

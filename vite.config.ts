@@ -14,9 +14,9 @@ export default defineConfig({
     port: 3000,
           proxy: {
         '/api': {
-          target: 'https://lul-backend.onrender.com',
+          target: process.env.VITE_API_BASE_URL || 'http://localhost:8080',
           changeOrigin: true,
-          secure: true,
+          secure: false,
         },
       },
   },

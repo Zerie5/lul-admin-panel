@@ -259,7 +259,7 @@ export const getFilteredNonWalletTransfers = async (
       endpoint,
       { 
         params,
-        headers
+        headers 
       }
     );
     

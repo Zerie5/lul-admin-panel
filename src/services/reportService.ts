@@ -931,7 +931,7 @@ export const deleteReportConfiguration = async (id: string): Promise<void> => {
 
 export const exportReportData = async (reportType: string, filters: ReportFilters, options: ReportExportOptions): Promise<Blob> => {
   const response = await axios.post(`${REPORTS_ENDPOINT}/export`, {
-    reportType,
+      reportType,
     filters,
     options
   }, {

@@ -1,161 +1,187 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Divider,
-  Grid,
-  TextField,
+  Container,
+  Paper,
   Typography,
-  Avatar
+  TextField,
+  Button,
+  Grid,
+  Avatar,
+  Box,
+  Divider,
+  Alert
 } from '@mui/material';
 
+interface ProfileData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+}
+
 const Profile: React.FC = () => {
-  const [formData, setFormData] = React.useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    company: 'Acme Inc.',
-    jobTitle: 'Senior Developer'
+  const [profile, setProfile] = useState<ProfileData>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: '',
   });
 
-  const handleChange = (e: any) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+  const [isEditing, setIsEditing] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const handleInputChange = (field: keyof ProfileData) => (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setProfile(prev => ({
+      ...prev,
+      [field]: event.target.value
+    }));
   };
 
-  const handleSubmit = (e: any) => {
-    e.preventDefault();
-    // In a real app, you would save the profile data here
-    alert('Profile updated successfully!');
+  const handleSave = () => {
+    // TODO: Implement save functionality with backend API
+    setIsEditing(false);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
+  };
+
+  const handleCancel = () => {
+    // TODO: Reset to original values from backend
+    setIsEditing(false);
   };
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Profile
-      </Typography>
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      {showSuccess && (
+        <Alert severity="success" sx={{ mb: 3 }}>
+          Profile updated successfully!
+        </Alert>
+      )}
+      
+      <Paper elevation={3} sx={{ p: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+          <Avatar
+            sx={{ width: 100, height: 100, mr: 3, bgcolor: 'primary.main' }}
+            alt="User Profile"
+          >
+            {profile.firstName?.[0] || 'U'}
+          </Avatar>
+          <Box>
+            <Typography variant="h4">
+              {profile.firstName || profile.lastName 
+                ? `${profile.firstName} ${profile.lastName}`.trim() 
+                : 'User Profile'
+              }
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Administrator
+            </Typography>
+          </Box>
+        </Box>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <Avatar
-                sx={{
-                  width: 100,
-                  height: 100,
-                  mb: 2,
-                  fontSize: '2.5rem',
-                  bgcolor: 'primary.main'
-                }}
+        <Divider sx={{ mb: 4 }} />
+
+        <Typography variant="h6" gutterBottom>
+          Profile Information
+        </Typography>
+
+        <Grid container spacing={3}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="First Name"
+              value={profile.firstName}
+              onChange={handleInputChange('firstName')}
+              disabled={!isEditing}
+              variant="outlined"
+              placeholder="Enter first name"
+            />
+          </Grid>
+          
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Last Name"
+              value={profile.lastName}
+              onChange={handleInputChange('lastName')}
+              disabled={!isEditing}
+              variant="outlined"
+              placeholder="Enter last name"
+            />
+          </Grid>
+          
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Email"
+              value={profile.email}
+              onChange={handleInputChange('email')}
+              disabled={!isEditing}
+              variant="outlined"
+              type="email"
+              placeholder="Enter email address"
+            />
+          </Grid>
+          
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Phone"
+              value={profile.phone}
+              onChange={handleInputChange('phone')}
+              disabled={!isEditing}
+              variant="outlined"
+              placeholder="Enter phone number"
+            />
+          </Grid>
+          
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Address"
+              value={profile.address}
+              onChange={handleInputChange('address')}
+              disabled={!isEditing}
+              variant="outlined"
+              multiline
+              rows={3}
+              placeholder="Enter address"
+            />
+          </Grid>
+        </Grid>
+
+        <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
+          {!isEditing ? (
+            <Button 
+              variant="contained" 
+              color="primary"
+              onClick={() => setIsEditing(true)}
+            >
+              Edit Profile
+            </Button>
+          ) : (
+            <>
+              <Button 
+                variant="contained" 
+                color="primary"
+                onClick={handleSave}
               >
-                {formData.firstName.charAt(0)}{formData.lastName.charAt(0)}
-              </Avatar>
-              <Typography variant="h5">
-                {formData.firstName} {formData.lastName}
-              </Typography>
-              <Typography color="text.secondary" gutterBottom>
-                {formData.jobTitle}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {formData.company}
-              </Typography>
-              <Button
-                variant="outlined"
-                sx={{ mt: 2 }}
-              >
-                Change Photo
+                Save Changes
               </Button>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Personal Information
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
-
-              <Box component="form" onSubmit={handleSubmit}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="First Name"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Last Name"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Email Address"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Phone Number"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Company"
-                      name="company"
-                      value={formData.company}
-                      onChange={handleChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Job Title"
-                      name="jobTitle"
-                      value={formData.jobTitle}
-                      onChange={handleChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                      <Button
-                        type="submit"
-                        variant="contained"
-                      >
-                        Save Changes
-                      </Button>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+              <Button 
+                variant="outlined"
+                onClick={handleCancel}
+              >
+                Cancel
+              </Button>
+            </>
+          )}
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 
